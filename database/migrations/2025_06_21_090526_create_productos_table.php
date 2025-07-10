@@ -9,21 +9,21 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-      Schema::create('productos', function (Blueprint $table) {
-        $table->id();
-        $table->string('codigo', 50)->unique();
-        $table->string('nombre', 100);
-        $table->unsignedBigInteger('unidad_base_id');
-        $table->decimal('precio', 10, 2);
-        $table->decimal('stock', 10, 2);
-        $table->timestamps();
-
-        $table->foreign('unidad_base_id')->references('id')->on('unidades_medida');
-      });
+        Schema::create('productos', function (Blueprint $table) {
+            $table->id();
+            $table->string('codigo', 5)->unique();
+            $table->string('nombre');
+            $table->string('descripcion')->nullable();
+            $table->integer('unidades')->default(0);
+            $table->double('metros_sobrantes', 8, 2)->default(0);
+            $table->double('metros_unidad', 8, 2)->default(0); // Nuevo campo
+            $table->double('precio_unidad', 8, 2)->default(0);
+            $table->double('precio_metro', 8, 2)->default(0);
+            $table->timestamps();
+        });
     }
-
 
     /**
      * Reverse the migrations.

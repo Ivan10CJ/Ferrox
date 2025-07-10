@@ -80,10 +80,10 @@
         <h4>Bienvenido,<br> {{ auth()->user()->nombre_completo }}</h4>
 
         @if(auth()->user()->rol->id_rol === 'ADMIN')
-            <a href="#">Productos</a>
             <a href="#">Inventario</a>
             <li class="nav-item"><a href="{{ route('ventas.index') }}" class="nav-link text-white">Realizar Venta</a></li>
             <a href="#">Corte de Caja</a>
+            <a href="{{ route('admin.usuarios.index') }}">Usuarios</a>
         @elseif(auth()->user()->rol->id_rol === 'EMPLEA')
             <li class="nav-item"><a href="{{ route('ventas.index') }}" class="nav-link text-white">Realizar Venta</a></li>
             <p><strong>Rol:</strong> Empleado</p>

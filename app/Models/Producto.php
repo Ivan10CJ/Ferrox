@@ -8,12 +8,16 @@ class Producto extends Model
 {
     protected $table = 'productos';
 
-    protected $fillable = ['codigo', 'nombre', 'unidad_base_id', 'precio', 'stock'];
-
-    public function unidadBase()
-    {
-        return $this->belongsTo(UnidadMedida::class, 'unidad_base_id');
-    }
+    protected $fillable = [
+        'codigo',
+        'nombre',
+        'descripcion',
+        'unidades',
+        'metros_sobrantes',
+        'metros_unidad',
+        'precio_unidad',
+        'precio_metro'
+    ];
 
     public function detalleVentas()
     {
