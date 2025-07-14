@@ -8,20 +8,21 @@ class DetalleVenta extends Model
 {
     protected $table = 'detalle_ventas';
 
-    protected $fillable = ['venta_id', 'producto_id', 'cantidad', 'unidad_venta_id', 'precio_unitario', 'subtotal'];
+    protected $fillable = [
+        'venta_id',
+        'inventario_id',
+        'cantidad',
+        'precio_unitario',
+        'subtotal',
+    ];
 
     public function venta()
     {
         return $this->belongsTo(Venta::class, 'venta_id');
     }
 
-    public function producto()
+    public function inventario()
     {
-        return $this->belongsTo(Producto::class, 'producto_id');
-    }
-
-    public function unidadVenta()
-    {
-        return $this->belongsTo(UnidadMedida::class, 'unidad_venta_id');
+        return $this->belongsTo(Inventario::class, 'inventario_id');
     }
 }

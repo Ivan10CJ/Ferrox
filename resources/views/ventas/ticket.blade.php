@@ -2,76 +2,98 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Ticket de Venta</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Ticket de Venta #{{ $venta->id }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            margin: 20px;
-            color: #000;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .header img {
-            width: 80px;
-        }
-        .header h2 {
+        body { 
+            font-family: DejaVu Sans, sans-serif; 
+            font-size: 12px; 
             margin: 0;
-            padding: 0;
+            padding: 10px;
         }
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
+        .header { 
+            text-align: center; 
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 10px;
         }
-        .table th, .table td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: center;
+        .header h2 { 
+            margin: 0; 
+            font-size: 18px;
+        }
+        .info { 
+            margin-bottom: 10px; 
+        }
+        .info p { 
+            margin: 3px 0; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 10px 0;
+            font-size: 11px;
+        }
+        th { 
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 5px; 
+            text-align: left; 
+        }
+        .totals {
+            margin-top: 10px;
+            text-align: right;
+            font-size: 13px;
         }
         .total {
-            text-align: right;
-            margin-top: 20px;
             font-weight: bold;
         }
         .footer {
             text-align: center;
-            margin-top: 30px;
-            font-size: 12px;
+            margin-top: 15px;
+            font-size: 10px;
+            border-top: 1px dashed #000;
+            padding-top: 10px;
         }
     </style>
 </head>
 <body>
-
-    {{-- Encabezado con logo y nombre --}}
     <div class="header">
-        <img src="{{ public_path('logo.png') }}" alt="Logo de la ferretería">
         <h2>Ferretería Ferros</h2>
+        <p>Calle Principal #123, Ciudad</p>
+        <p>Tel: 555-123-4567 | RFC: XXXX000000XX</p>
     </div>
 
-    {{-- Datos de la venta --}}
-    <p><strong>Fecha:</strong> {{ $venta->fecha }}</p>
-    <p><strong>Vendedor:</strong> {{ $venta->usuario->nombre_completo }}</p>
+    <div class="info">
+        <p><strong>Ticket:</strong> #{{ str_pad($venta->id, 6, '0', STR_PAD_LEFT) }}</p>
+        <p><strong>Fecha:</strong> {{ $fecha }}</p>
+        <p><strong>Atendió:</strong> {{ $usuario }}</p>
+    </div>
 
-    {{-- Tabla de productos --}}
-    <table class="table">
+    <table>
         <thead>
             <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Unidad</th>
-                <th>Precio Unitario</th>
-                <th>Subtotal</th>
+                <th style="width: 50%;">Producto</th>
+                <th style="width: 10%;">Cant.</th>
+                <th style="width: 10%;">Tipo</th>
+                <th style="width: 15%;">P. Unit.</th>
+                <th style="width: 15%;">Subtotal</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($venta->detalles as $detalle)
+            @foreach($detalles as $detalle)
                 <tr>
-                    <td>{{ $detalle->producto->nombre }}</td>
-                    <td>{{ $detalle->cantidad }}</td>
-                    <td>{{ $detalle->producto->unidadBase->nombre }}</td>
+                    <td>{{ $detalle->inventario->nombre }}</td>
+                    <td>{{ number_format($detalle->cantidad, 2) }}</td>
+                    <td>
+                        @if($detalle->inventario->tipo_venta === 'kilo' || $detalle->inventario->tipo_venta === 'pieza')
+                            Unidad
+                        @else
+                            {{ ($detalle->precio_unitario == $detalle->inventario->precio_metro) ? 'Metro' : 'Unidad' }}
+                        @endif
+                    </td>
                     <td>${{ number_format($detalle->precio_unitario, 2) }}</td>
                     <td>${{ number_format($detalle->subtotal, 2) }}</td>
                 </tr>
@@ -79,18 +101,16 @@
         </tbody>
     </table>
 
-    {{-- Totales --}}
-    <div class="total">
-        <p>Total: ${{ number_format($venta->total, 2) }}</p>
-        <p>Monto Pagado: ${{ number_format($pago, 2) }}</p>
-        <p>Cambio: ${{ number_format($cambio, 2) }}</p>
+    <div class="totals">
+        <p>Subtotal: ${{ number_format($venta->total, 2) }}</p>
+        <p class="total">TOTAL: ${{ number_format($venta->total, 2) }}</p>
+        <p>Ganancia: ${{ number_format($venta->ganancia, 2) }}</p>
     </div>
 
-    {{-- Mensaje de cierre --}}
     <div class="footer">
         <p>¡Gracias por su compra!</p>
-        <p>Visítenos nuevamente</p>
+        <p>Este ticket es un comprobante fiscal</p>
+        <p>No válido como factura</p>
     </div>
-
 </body>
 </html>

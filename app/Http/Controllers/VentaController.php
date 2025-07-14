@@ -2,106 +2,224 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Producto;
+use Illuminate\Http\Request;
+use App\Models\Inventario;
 use App\Models\Venta;
 use App\Models\DetalleVenta;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class VentaController extends Controller
 {
-    // Mostrar la vista
     public function index()
     {
         return view('ventas.index');
     }
 
-    // Buscar productos por código o nombre
-    public function buscar($buscar)
+    public function buscarProducto(Request $request)
     {
-        $productos = Producto::where('codigo', 'LIKE', "%$buscar%")
-            ->orWhere('nombre', 'LIKE', "%$buscar%")
-            ->with('unidadBase') // Cargamos la relación
-            ->get();
-
-        if ($productos->isEmpty()) {
-            return response()->json([]);
-        }
-
-        // Transformamos la respuesta para que unidad_base sea texto, no objeto
-        $productosTransformados = $productos->map(function($producto) {
+        $query = $request->input('query');
+        $productos = Inventario::buscar($query)->get();
+        
+        return response()->json($productos->map(function ($producto) {
             return [
                 'id' => $producto->id,
                 'codigo' => $producto->codigo,
                 'nombre' => $producto->nombre,
-                'unidad_base' => $producto->unidadBase->nombre, // Solo el nombre
-                'precio' => $producto->precio,
-                'stock' => $producto->stock
+                'tipo_venta' => $producto->tipo_venta,
+                'precio_unidad' => $producto->precio_unidad,
+                'precio_metro' => $producto->precio_metro,
+                'unidad' => $producto->unidad,
+                'metros' => $producto->metros,
+                'metros_unidad' => $producto->metros_unidad
             ];
-        });
-
-        return response()->json($productosTransformados);
+        }));
     }
 
-    // Guardar venta
-   public function guardar(Request $request)
-{
-    DB::beginTransaction();
+    public function verificarStock(Request $request)
+    {
+        $productos = $request->input('productos');
+        $errores = [];
+
+        foreach ($productos as $producto) {
+            $item = Inventario::find($producto['id']);
+            
+            if (!$item) {
+                $errores[] = "Producto no encontrado: {$producto['nombre']}";
+                continue;
+            }
+
+            if (!$item->verificarDisponibilidad($producto['tipo'], $producto['cantidad'])) {
+                $tipo = $producto['tipo'] === 'unidad' ? 'unidades' : 'metros';
+                $errores[] = "Stock insuficiente para {$item->nombre} (necesitas {$producto['cantidad']} {$tipo})";
+            }
+        }
+
+        if (!empty($errores)) {
+            return response()->json(['error' => implode(', ', $errores)], 400);
+        }
+
+        return response()->json(['success' => true]);
+    }
+////////////////////////////////////////////////////////////////////////////////////////
+ public function registrarVenta(Request $request)
+    {
+         DB::beginTransaction();
 
     try {
+        // Validación básica de los datos recibidos
+        $request->validate([
+            'productos' => 'required|array|min:1',
+            'productos.*.id' => 'required|exists:inventarios,id',
+            'productos.*.cantidad' => 'required|numeric|min:0.01',
+            'productos.*.precio' => 'required|numeric|min:0.01',
+            'productos.*.tipo' => 'required|in:unidad,metro',
+            'monto_recibido' => 'required|numeric|min:0'
+        ]);
+
+        $productos = $request->input('productos');
+        $usuarioId = Auth::id();
+        $total = 0;
+        $gananciaTotal = 0;
+
+        // Crear la venta
         $venta = new Venta();
-        $venta->usuario_id = auth()->user()->id_usuario;
-        $venta->total = collect($request->productos)->sum('subtotal');
+        $venta->usuario_id = $usuarioId;
+        $venta->fecha = now();
+        $venta->total = 0; // Se actualizará después
+        $venta->ganancia = 0; // Se actualizará después
+        $venta->corte_id = $this->obtenerCorteActivo()->id ?? null;
         $venta->save();
 
-        foreach ($request->productos as $item) {
+        // Procesar cada producto
+        foreach ($productos as $prod) {
+            $inventario = Inventario::findOrFail($prod['id']);
+            
+            // Calcular subtotal y ganancia
+            $subtotal = $prod['cantidad'] * $prod['precio'];
+            $precioCompra = $prod['tipo'] === 'unidad' 
+                ? $inventario->precio_compra_unidad 
+                : $inventario->precio_compra_metro;
+            $ganancia = ($prod['precio'] - $precioCompra) * $prod['cantidad'];
+
+            // Registrar detalle
             $detalle = new DetalleVenta();
             $detalle->venta_id = $venta->id;
-            $detalle->producto_id = $item['id'];
-            $detalle->cantidad = $item['cantidad'];
-            $detalle->unidad_venta_id = Producto::find($item['id'])->unidad_base_id;
-            $detalle->precio_unitario = $item['precio'];
-            $detalle->subtotal = $item['subtotal'];
+            $detalle->inventario_id = $inventario->id;
+            $detalle->cantidad = $prod['cantidad'];
+            $detalle->precio_unitario = $prod['precio'];
+            $detalle->subtotal = $subtotal;
             $detalle->save();
 
-            // Actualizar stock
-            $producto = Producto::find($item['id']);
-            $producto->stock -= $item['cantidad'];
-            $producto->save();
+            // Actualizar inventario
+            if ($prod['tipo'] === 'unidad') {
+                $inventario->decrement('unidad', $prod['cantidad']);
+            } else {
+                $this->disminuirMetrosInventario($inventario, $prod['cantidad']);
+            }
+
+            $total += $subtotal;
+            $gananciaTotal += $ganancia;
         }
+
+        // Actualizar totales de la venta
+        $venta->total = $total;
+        $venta->ganancia = $gananciaTotal;
+        $venta->save();
 
         DB::commit();
 
-        // ✅ Guardamos el pago y el cambio en la sesión
-        session(['pago_cliente' => $request->monto_pagado]);
-        session(['cambio_cliente' => $request->cambio]);
-
-        return response()->json(['success' => true, 'venta_id' => $venta->id]);
+        return response()->json([
+            'success' => true,
+            'venta_id' => $venta->id,
+            'total' => $total,
+            'message' => 'Venta registrada correctamente'
+        ]);
 
     } catch (\Exception $e) {
         DB::rollBack();
-        return response()->json(['success' => false, 'message' => 'Error al registrar la venta.']);
+        Log::error('Error al registrar venta: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'error' => 'Error al registrar la venta: ' . $e->getMessage(),
+            'trace' => env('APP_DEBUG') ? $e->getTrace() : null
+        ], 500);
     }
 }
-
-
-    // Generar ticket PDF
+////////////////////////////////////////////////////////////////////////////////////
+private function disminuirMetrosInventario($inventario, $metrosVendidos)
+{
+    $metrosRestantes = $metrosVendidos;
+    
+    // Primero descontar de los metros sueltos
+    if ($inventario->metros > 0) {
+        $metrosADescontar = min($metrosRestantes, $inventario->metros);
+        $inventario->decrement('metros', $metrosADescontar);
+        $metrosRestantes -= $metrosADescontar;
+    }
+    
+    // Si aún quedan metros por descontar, convertir unidades
+    if ($metrosRestantes > 0 && $inventario->unidad > 0) {
+        $unidadesNecesarias = ceil($metrosRestantes / $inventario->metros_unidad);
+        $inventario->decrement('unidad', $unidadesNecesarias);
+        $metrosConvertidos = $unidadesNecesarias * $inventario->metros_unidad;
+        $inventario->increment('metros', $metrosConvertidos - $metrosRestantes);
+    }
+}
+/////////////////////////////////////////////////////////////////////////////
+    protected function obtenerCorteActivo()
+    {
+        return DB::table('cortes_caja')
+            ->whereNull('fecha_fin')
+            ->orderBy('fecha_inicio', 'desc')
+            ->first();
+    }
+///////////////////////////////////////////////////////////
     public function generarTicket($id)
     {
-        $venta = Venta::with('detalles.producto.unidadBase', 'usuario')->findOrFail($id);
+         try {
+        // Cargar la venta con todas las relaciones necesarias
+         $venta = Venta::with([
+            'usuario',
+            'detalles.inventario' => function($query) {
+                $query->select('id', 'nombre', 'tipo_venta', 'precio_unidad', 'precio_metro');
+            }
+        ])->findOrFail($id);
 
+        // Preparar los datos para la vista
         $data = [
             'venta' => $venta,
-            'total' => $venta->total,
-            'pago' => session('pago_cliente'),
-            'cambio' => session('cambio_cliente'),
+            'fecha' => Carbon::parse($venta->fecha)->format('d/m/Y H:i:s'),
+            'detalles' => $venta->detalles,
+            'usuario' => $venta->usuario->nombre_completo ?? 'Venta rápida',
         ];
 
-        $pdf = Pdf::loadView('ventas.ticket', $data);
-        
+        // Cargar la vista y generar el PDF
+        $pdf = PDF::loadView('ventas.ticket', $data);
 
+        // Configurar el nombre del archivo
+        $filename = "ticket_venta_{$venta->id}.pdf";
 
-        return $pdf->download('ticket_venta_' . $venta->id . '.pdf');
+        // Retornar el PDF para visualización en el navegador
+        return $pdf->stream($filename);
+
+    } catch (\Exception $e) {
+        // Registrar el error y retornar una respuesta adecuada
+        Log::error("Error al generar ticket: " . $e->getMessage());
+        return response()->json([
+            'error' => 'No se pudo generar el ticket',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+////////////////////////////////////////////////////////////////////
+    protected function convertirNumeroALetras($numero)
+    {
+        // Implementación de conversión de número a letras
+        // Puedes usar un paquete como "numero-a-letras"
+        return "** IMPLEMENTA CONVERSIÓN A LETRAS AQUÍ **";
     }
 }

@@ -4,20 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Ferretería Ferros - @yield('title')</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     @stack('styles')
+    
     <style>
+        
         body {
             font-family: 'Montserrat', sans-serif;
             background-color: #F4F3EB;
             margin: 0;
             padding: 0;
         }
-
+        
         .sidebar {
             width: 220px;
             background-color: #052A59;
@@ -71,6 +76,23 @@
         .btn-logout:hover {
             background-color: #6b0014;
         }
+        .hover-bg-light:hover {
+    background-color: #f8f9fa !important;
+}
+
+.bg-primary {
+    background-color: #052A59 !important;
+}
+
+.btn-danger {
+    background-color: #8F001A !important;
+    border-color: #8F001A !important;
+}
+
+.bg-light {
+    background-color: #E7E8E7 !important;
+}
+        
     </style>
 </head>
 
@@ -80,12 +102,13 @@
         <h4>Bienvenido,<br> {{ auth()->user()->nombre_completo }}</h4>
 
         @if(auth()->user()->rol->id_rol === 'ADMIN')
-            <a href="#">Productos</a>
-            <a href="#">Inventario</a>
-            <li class="nav-item"><a href="{{ route('ventas.index') }}" class="nav-link text-white">Realizar Venta</a></li>
-            <a href="#">Corte de Caja</a>
+            <a class="nav-item"><a href="{{ route('ventas.index') }}" class="nav-link text-white">Realizar Venta</a></a>
+            <a class="nav-item"><a href="{{ route('corte-caja.index') }}" class="nav-link text-white">Corte de Caja</a></a>
+            <a class="nav-item"><a href="{{ route('inventario.index') }}" class="nav-link text-white">Inventario</a></a>
+            <a href="{{ route('admin.usuarios.index') }}">Usuarios</a>
         @elseif(auth()->user()->rol->id_rol === 'EMPLEA')
-            <li class="nav-item"><a href="{{ route('ventas.index') }}" class="nav-link text-white">Realizar Venta</a></li>
+            <a class="nav-item"><a href="{{ route('ventas.index') }}" class="nav-link text-white">Realizar Venta</a></a>
+            <a class="nav-item"><a href="{{ route('inventario.index') }}" class="nav-link text-white">Inventario</a></a>
             <p><strong>Rol:</strong> Empleado</p>
         @endif
 
