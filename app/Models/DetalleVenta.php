@@ -25,4 +25,9 @@ class DetalleVenta extends Model
     {
         return $this->belongsTo(Inventario::class, 'inventario_id');
     }
+
+    public function getProductoAttribute()
+    {
+        return $this->inventario ? $this->inventario->producto : null;
+    }
 }

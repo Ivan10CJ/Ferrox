@@ -10,7 +10,8 @@ class Kernel extends HttpKernel
      * Middleware globales (puedes dejarlo vacío si tu proyecto no los requiere)
      */
     protected $middleware = [
-        // Aquí puedes agregar middlewares globales si los usas después.
+        // Configurar zona horaria globalmente
+        \App\Http\Middleware\SetTimezone::class,
     ];
 
     /**

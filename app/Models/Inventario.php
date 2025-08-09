@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\DetalleVenta;
 
 class Inventario extends Model
 {
-    use HasFactory;
-
-    protected $table = 'inventarios';
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'codigo',
@@ -19,18 +19,62 @@ class Inventario extends Model
         'unidad',
         'metros',
         'metros_unidad',
-        'precio_unidad',
         'precio_compra_unidad',
+        'precio_unidad',
         'precio_metro',
         'precio_compra_metro',
+        'activo'
     ];
 
-    // Relación con detalles de venta
-    public function detallesVenta()
+    protected $casts = [
+        'tipo_venta' => 'string',
+        'unidad' => 'integer',
+        'metros' => 'decimal:2',
+        'metros_unidad' => 'decimal:2',
+        'precio_compra_unidad' => 'decimal:2',
+        'precio_unidad' => 'decimal:2',
+        'precio_metro' => 'decimal:2',
+        'precio_compra_metro' => 'decimal:2',
+        'activo' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
+    ];
+
+    protected $attributes = [
+        'activo' => true,
+        'unidad' => 0,
+    ];
+
+    public function detalleVentas()
     {
         return $this->hasMany(DetalleVenta::class, 'inventario_id');
     }
 
+    public function scopeActivos($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    public function scopeInactivos($query)
+    {
+        return $query->where('activo', false);
+    }
+
+    public function scopePorCodigo($query, $codigo)
+    {
+        return $query->where('codigo', 'like', "%{$codigo}%");
+    }
+
+    public function puedeEliminarse()
+    {
+        return !$this->detalleVentas()->exists();
+    }
+
+    public function producto()
+    {
+        return $this->belongsTo(Producto::class, 'producto_id');
+    }
+    
     // Método para verificar disponibilidad
     public function verificarDisponibilidad($tipo, $cantidad)
     {
@@ -82,4 +126,5 @@ class Inventario extends Model
         return $query->where('codigo', 'LIKE', "%$termino%")
                     ->orWhere('nombre', 'LIKE', "%$termino%");
     }
+    
 }

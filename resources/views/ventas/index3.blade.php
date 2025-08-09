@@ -17,11 +17,11 @@
 
     <!-- Carrito -->
     <div id="carrito" class="bg-light p-4 rounded shadow mt-4">
-        <h3 class="h5 fw-bold text-white bg-primary p-3 rounded mb-3">Carrito de Compras</h3>
+        <h3 class="h5 fw-bold text-primary mb-3">Carrito de Compras</h3>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
-                    <tr class="bg-primary text-white">
+                    <tr class="table-primary">
                         <th>Producto</th>
                         <th>Cantidad</th>
                         <th>Tipo</th>
@@ -68,7 +68,7 @@
         <div id="datosProducto"></div>
         <div class="mt-3">
             <label class="form-label fw-bold">Cantidad:</label>
-            <input type="number" id="cantidad" class="form-control mb-3" min="1" step="1" value="1">
+            <input type="number" id="cantidad" class="form-control mb-3" min="0.01" step="0.01" value="1">
             
             <select id="tipoVenta" class="form-select mb-3 d-none"></select>
 
@@ -121,7 +121,7 @@
 </div>
 
 <!-- Toast Notifications -->
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
     <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-header">
             <strong class="me-auto" id="toastTitle">Notificación</strong>
@@ -196,22 +196,8 @@ function buscar() {
         </div>`;
     resultados.classList.remove('d-none');
 
-    fetch(`/ventas/buscar-producto?query=${encodeURIComponent(query)}`, {
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-        .then(async res => {
-            if (!res.ok) {
-                let errorMsg = 'Error al buscar productos';
-                try {
-                    const data = await res.json();
-                    errorMsg = data.message || data.error || errorMsg;
-                } catch {}
-                throw new Error(errorMsg);
-            }
-            return res.json();
-        })
+    fetch(`/ventas/buscar-producto?query=${encodeURIComponent(query)}`)
+        .then(res => res.json())
         .then(data => {
             let html = '';
             if (data.length === 0) {
@@ -219,7 +205,7 @@ function buscar() {
             } else {
                 data.forEach(p => {
                     const precioMostrar = p.precio_unidad ? `$${parseFloat(p.precio_unidad).toFixed(2)}` : '';
-                    const stockMostrar = p.tipo_venta === 'rollo' || p.tipo_venta === 'tubo' || p.tipo_venta === 'metro' 
+                    const stockMostrar = p.tipo_venta === 'rollo' || p.tipo_venta === 'tubo' 
                         ? `${p.metros} m (${p.unidad} rollos)` 
                         : `${p.unidad} unidades`;
 
@@ -240,7 +226,7 @@ function buscar() {
             resultados.innerHTML = html;
         })
         .catch(err => {
-            resultados.innerHTML = `<p class="text-danger p-2">${err.message}</p>`;
+            resultados.innerHTML = `<p class="text-danger p-2">Error al buscar productos</p>`;
         });
 }
 
@@ -270,7 +256,7 @@ function seleccionarProducto(data) {
         <p><strong>Tipo de venta:</strong> ${data.tipo_venta}</p>
         ${data.precio_unidad ? `<p><strong>Precio por unidad:</strong> $${parseFloat(data.precio_unidad).toFixed(2)}</p>` : ''}
         ${data.precio_metro ? `<p><strong>Precio por metro:</strong> $${parseFloat(data.precio_metro).toFixed(2)}</p>` : ''}
-        <p><strong>Stock disponible:</strong> ${data.tipo_venta === 'rollo' || data.tipo_venta === 'tubo' || data.tipo_venta === 'metro' 
+        <p><strong>Stock disponible:</strong> ${data.tipo_venta === 'rollo' || data.tipo_venta === 'tubo' 
             ? `${data.metros} metros (${data.unidad} unidades completas)` 
             : `${data.unidad} unidades`}</p>`;
 
@@ -345,7 +331,19 @@ function actualizarCarrito() {
             html += `
                 <tr>
                     <td class="align-middle">${item.nombre}</td>
-                    <td class="align-middle">${item.cantidad}</td>
+                    <td class="align-middle">
+                        <div class="input-group input-group-sm" style="width: 120px">
+                            <button class="btn btn-outline-secondary" onclick="actualizarCantidad(${index}, -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" 
+                                   value="${item.cantidad}" min="0.01" step="0.01"
+                                   onchange="actualizarCantidad(${index}, 0, this.value)">
+                            <button class="btn btn-outline-secondary" onclick="actualizarCantidad(${index}, 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </td>
                     <td class="align-middle text-capitalize">${item.tipo}</td>
                     <td class="align-middle">$${item.precio.toFixed(2)}</td>
                     <td class="align-middle">$${item.subtotal.toFixed(2)}</td>
@@ -534,5 +532,3 @@ function generarTicket() {
 }
 </script>
 @endpush
-
-

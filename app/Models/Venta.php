@@ -17,6 +17,10 @@ class Venta extends Model
         'corte_id',
     ];
 
+    protected $casts = [
+        'fecha' => 'datetime',
+    ];
+
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'usuario_id', 'id_usuario');

@@ -24,12 +24,21 @@ class LoginController extends Controller
 
         $user = Usuario::where('nombre_usuario', $request->nombre_usuario)->first();
 
+        // Verifica credenciales
         if (!$user || !Hash::check($request->password, $user->password_hash)) {
             throw ValidationException::withMessages([
                 'nombre_usuario' => 'Credenciales incorrectas',
             ]);
         }
 
+        // Verifica si está dado de baja
+        if ($user->estatus === 'baja') {
+            throw ValidationException::withMessages([
+                'nombre_usuario' => 'Este usuario está dado de baja. No puede iniciar sesión.',
+            ]);
+        }
+
+        // Login exitoso
         auth()->login($user);
 
         $rol = $user->rol->id_rol;

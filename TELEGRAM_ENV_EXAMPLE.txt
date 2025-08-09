@@ -1,0 +1,100 @@
+# ===========================================
+# CONFIGURACIÓN DE TELEGRAM BOT
+# ===========================================
+# 
+# Copia estas variables a tu archivo .env
+# y reemplaza los valores con tu configuración real
+
+# ===========================================
+# CONFIGURACIÓN BÁSICA (OBLIGATORIA)
+# ===========================================
+
+# Token del bot de Telegram (obtenido de @BotFather)
+TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+
+# ID del chat donde se enviarán las notificaciones
+# Para chat privado: número positivo (ej: 123456789)
+# Para grupo: número negativo (ej: -987654321)
+TELEGRAM_CHAT_ID=123456789
+
+# ===========================================
+# CONFIGURACIÓN DE NOTIFICACIONES (OPCIONAL)
+# ===========================================
+
+# Habilitar notificaciones de ventas (true/false)
+TELEGRAM_NOTIFY_VENTAS=true
+
+# Habilitar notificaciones de stock bajo (true/false)
+TELEGRAM_NOTIFY_STOCK_LOW=true
+
+# Habilitar notificaciones de errores (true/false)
+TELEGRAM_NOTIFY_ERRORS=false
+
+# ===========================================
+# CONFIGURACIÓN AVANZADA (OPCIONAL)
+# ===========================================
+
+# Umbral para notificaciones de stock bajo
+TELEGRAM_STOCK_THRESHOLD=10
+
+# Habilitar reintentos en caso de fallo (true/false)
+TELEGRAM_RETRY_ENABLED=true
+
+# Número máximo de intentos de reintento
+TELEGRAM_MAX_RETRY_ATTEMPTS=3
+
+# Tiempo de espera entre reintentos (en segundos)
+TELEGRAM_RETRY_DELAY=5
+
+# ===========================================
+# CHATS ESPECÍFICOS (OPCIONAL)
+# ===========================================
+# Si quieres enviar diferentes tipos de notificaciones
+# a diferentes chats, puedes usar estas variables
+
+# Chat específico para notificaciones de ventas
+# TELEGRAM_CHAT_ID_VENTAS=123456789
+
+# Chat específico para notificaciones de stock
+# TELEGRAM_CHAT_ID_STOCK=987654321
+
+# Chat específico para notificaciones de errores
+# TELEGRAM_CHAT_ID_ERRORS=555666777
+
+# ===========================================
+# INSTRUCCIONES DE CONFIGURACIÓN
+# ===========================================
+
+# 1. Crear bot en Telegram:
+#    - Buscar @BotFather en Telegram
+#    - Enviar /newbot
+#    - Seguir las instrucciones
+#    - Guardar el token proporcionado
+
+# 2. Obtener Chat ID:
+#    - Iniciar conversación con tu bot
+#    - Enviar cualquier mensaje
+#    - Visitar: https://api.telegram.org/bot<TU_TOKEN>/getUpdates
+#    - Buscar el "chat_id" en la respuesta JSON
+
+# 3. Probar configuración:
+#    - Ejecutar: php artisan telegram:test
+#    - Si todo está bien, recibirás un mensaje en Telegram
+
+# 4. Probar notificación de venta:
+#    - Ejecutar: php artisan telegram:test --venta
+#    - Deberías recibir una notificación de venta de prueba
+
+# ===========================================
+# EJEMPLO DE CONFIGURACIÓN COMPLETA
+# ===========================================
+
+# TELEGRAM_BOT_TOKEN=6123456789:AAHabcdefghijklmnopqrstuvwxyz123456
+# TELEGRAM_CHAT_ID=123456789
+# TELEGRAM_NOTIFY_VENTAS=true
+# TELEGRAM_NOTIFY_STOCK_LOW=true
+# TELEGRAM_NOTIFY_ERRORS=false
+# TELEGRAM_STOCK_THRESHOLD=10
+# TELEGRAM_RETRY_ENABLED=true
+# TELEGRAM_MAX_RETRY_ATTEMPTS=3
+# TELEGRAM_RETRY_DELAY=5 

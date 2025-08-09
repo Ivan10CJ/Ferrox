@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Configurar zona horaria para Carbon
+        Carbon::setLocale('es');
+        
+        // Asegurar que todas las fechas se manejen en la zona horaria de México
+        date_default_timezone_set('America/Mexico_City');
     }
 }

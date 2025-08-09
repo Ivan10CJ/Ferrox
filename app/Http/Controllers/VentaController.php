@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
+use App\Services\TelegramService;
+use App\Helpers\DateTimeHelper;
 
 class VentaController extends Controller
 {
@@ -65,7 +67,7 @@ class VentaController extends Controller
         return response()->json(['success' => true]);
     }
 ////////////////////////////////////////////////////////////////////////////////////////
- public function registrarVenta(Request $request)
+ public function registrarVenta(Request $request, TelegramService $telegram)
     {
          DB::beginTransaction();
 
@@ -88,7 +90,7 @@ class VentaController extends Controller
         // Crear la venta
         $venta = new Venta();
         $venta->usuario_id = $usuarioId;
-        $venta->fecha = now();
+        $venta->fecha = DateTimeHelper::now();
         $venta->total = 0; // Se actualizará después
         $venta->ganancia = 0; // Se actualizará después
         $venta->corte_id = $this->obtenerCorteActivo()->id ?? null;
@@ -129,6 +131,22 @@ class VentaController extends Controller
         $venta->total = $total;
         $venta->ganancia = $gananciaTotal;
         $venta->save();
+
+
+        $mensaje = "<b>🧾 Venta registrada</b>\n";
+        $mensaje .= "🧑 Usuario: " . (Auth::user()->nombre_completo ?? 'Desconocido') . "\n";
+        $mensaje .= "🕒 Fecha: " . now()->format('d/m/Y H:i:s') . "\n";
+        $mensaje .= "💰 Total: $" . number_format($total, 2) . "\n\n";
+        $mensaje .= "📦 Productos:\n";
+        
+        foreach ($productos as $prod) {
+            $inventario = Inventario::find($prod['id']);
+            $nombre = $inventario->nombre ?? 'Producto eliminado';
+            $mensaje .= "- {$nombre} ({$prod['cantidad']} {$prod['tipo']}) x $" . number_format($prod['precio'], 2) . "\n";
+        }
+        
+        $telegram->sendMessage($mensaje);
+
 
         DB::commit();
 
@@ -221,5 +239,29 @@ private function disminuirMetrosInventario($inventario, $metrosVendidos)
         // Implementación de conversión de número a letras
         // Puedes usar un paquete como "numero-a-letras"
         return "** IMPLEMENTA CONVERSIÓN A LETRAS AQUÍ **";
+    }
+
+    public function verDetalle($id)
+    {
+        $venta = Venta::with([
+            'usuario', 
+            'detalles.inventario',
+            'detalles.inventario.producto'
+        ])->findOrFail($id);
+        
+        $gananciaTotal = $venta->ganancia;
+        
+        // Renderizar la vista parcial o devolver JSON según la petición
+        if (request()->ajax()) {
+            // Si la petición viene del módulo de corte, usar la vista del corte
+            $referer = request()->header('Referer');
+            if (strpos($referer, '/corte') !== false) {
+                $html = view('corte._detalle_venta', compact('venta', 'gananciaTotal'))->render();
+            } else {
+                $html = view('ventas.detalle', compact('venta', 'gananciaTotal'))->render();
+            }
+            return response()->json(['success' => true, 'html' => $html]);
+        }
+        return view('ventas.detalle', compact('venta', 'gananciaTotal'));
     }
 }

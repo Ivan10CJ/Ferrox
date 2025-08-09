@@ -18,8 +18,13 @@
             padding-bottom: 10px;
         }
         .header h2 { 
-            margin: 0; 
+            margin: 5px 0; 
             font-size: 18px;
+        }
+        .logo {
+            max-width: 150px;
+            max-height: 80px;
+            margin-bottom: 5px;
         }
         .info { 
             margin-bottom: 10px; 
@@ -61,11 +66,14 @@
 </head>
 <body>
     <div class="header">
+        <!-- Asegúrate de que la ruta del logo sea correcta -->
+        <img src="{{ public_path('logo.png') }}" class="logo" alt="Logo Ferretería Ferros">
         <h2>Ferretería Ferros</h2>
-        <p>Calle Principal #123, Ciudad</p>
-        <p>Tel: 555-123-4567 | RFC: XXXX000000XX</p>
+        <p>Ignacio Manuel Altamirano #18, Ixmiquilpan Hidalgo</p>
+        <p>TEL. 7721358489 | RFC: EAMS290702HC7</p>
     </div>
 
+    <!-- Resto del código permanece igual -->
     <div class="info">
         <p><strong>Ticket:</strong> #{{ str_pad($venta->id, 6, '0', STR_PAD_LEFT) }}</p>
         <p><strong>Fecha:</strong> {{ $fecha }}</p>
@@ -102,9 +110,7 @@
     </table>
 
     <div class="totals">
-        <p>Subtotal: ${{ number_format($venta->total, 2) }}</p>
         <p class="total">TOTAL: ${{ number_format($venta->total, 2) }}</p>
-        <p>Ganancia: ${{ number_format($venta->ganancia, 2) }}</p>
     </div>
 
     <div class="footer">

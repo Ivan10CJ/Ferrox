@@ -3,6 +3,9 @@
 @section('title', 'Iniciar Sesión')
 
 @section('content')
+
+
+<!-- Formulario de Login -->
 <form method="POST" action="{{ route('login') }}">
     @csrf
 
@@ -24,10 +27,14 @@
         @enderror
     </div>
 
+    <div class="form-group form-check">
+        <label class="form-check-label" for="privacyCheck">
+            He leído y acepto el <a href="{{ asset('docs/aviso_privacidad.pdf') }}" target="_blank">Aviso de Privacidad</a>
+        </label>
+        
+        <input type="checkbox" class="form-check-input" id="privacyCheck" required>
+    </div>
+
     <button type="submit" class="btn-primary">Ingresar</button>
 </form>
-@endsection
-
-@section('auth-footer')
-    ¿No tienes cuenta? <a href="{{ route('register') }}">Regístrate</a>
 @endsection

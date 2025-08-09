@@ -12,18 +12,20 @@
             padding: 0;
             height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #072b58;
+            background-color:rgb(207, 205, 197); /* azul en el fondo general */
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
         .auth-container {
-            background-color: #072b58;
-            color: white;
+            background-color: #ffffff; /* centro blanco */
+            color: #2c2c2c;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
             box-sizing: border-box;
         }
 
@@ -33,19 +35,22 @@
         }
 
         .auth-header i {
-            font-size: 2rem;
-            margin: 0 1rem;
+            font-size: 1.8rem;
+            margin: 0 0.5rem;
+            color: #072b58; /* íconos en azul oscuro */
         }
 
         .auth-title {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: bold;
-            margin-top: 1rem;
+            margin-top: 0.8rem;
+            color: #072b58;
         }
 
         .auth-subtitle {
             font-size: 1rem;
             margin-bottom: 2rem;
+            color: #555;
         }
 
         .form-group {
@@ -55,17 +60,18 @@
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: white;
             font-weight: 500;
         }
 
         .form-control {
             width: 100%;
             padding: 0.75rem 2.5rem 0.75rem 2.5rem;
-            border: none;
-            border-radius: 4px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
             font-size: 1rem;
             box-sizing: border-box;
+            background-color: #f9f9f9;
+            color: #333;
         }
 
         .input-icon {
@@ -77,7 +83,7 @@
             left: 10px;
             top: 50%;
             transform: translateY(-50%);
-            color: #000;
+            color: #888;
         }
 
         .input-icon input {
@@ -87,12 +93,13 @@
         .btn-primary {
             width: 100%;
             padding: 0.75rem;
-            background-color: #a10c1e;
+            background-color: #072b58;
             color: white;
             border: none;
             border-radius: 20px;
             font-size: 1rem;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
 
         .btn-primary:hover {
@@ -102,18 +109,25 @@
         .auth-footer {
             margin-top: 2rem;
             text-align: center;
-            color: #ccc;
+            color: #555;
+            font-size: 0.95rem;
         }
 
         .auth-footer a {
-            color: #fff;
+            color: #a10c1e;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
             text-decoration: underline;
         }
 
         .error-message {
-            color: #ffaaaa;
+            color: #d9534f;
             font-size: 0.875rem;
             margin-top: 0.25rem;
+            display: block;
         }
     </style>
 </head>
